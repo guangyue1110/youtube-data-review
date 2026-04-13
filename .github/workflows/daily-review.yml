@@ -4,7 +4,10 @@ on:
   schedule:
     # 每天 22:30 (UTC+8) 运行，对应 UTC 14:30
     - cron: '30 14 * * *'
-  workflow_dispatch: # 支持手动触发
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   data-review:
@@ -18,10 +21,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          pip install requests
 
       - name: Run data fetch script
         env:
@@ -38,7 +37,7 @@ jobs:
           server_port: 465
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: 📊 YouTube 数据复盘 - ${{ env.REPORT_DATE }}
+          subject: "📊 YouTube 数据复盘 - ${{ env.REPORT_DATE }}"
           to: ${{ secrets.EMAIL_TO }}
           from: YouTube数据复盘机器人
           body: file://reports/email_body.html

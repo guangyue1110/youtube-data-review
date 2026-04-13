@@ -1,0 +1,52 @@
+name: YouTube Data Review
+
+on:
+  schedule:
+    # 每天 22:30 (UTC+8) 运行，对应 UTC 14:30
+    - cron: '30 14 * * *'
+  workflow_dispatch: # 支持手动触发
+
+jobs:
+  data-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Run data fetch script
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          CHANNEL_A_ID: ${{ secrets.CHANNEL_A_ID }}
+          CHANNEL_B_ID: ${{ secrets.CHANNEL_B_ID }}
+        run: |
+          python scripts/fetch_and_notify.py
+
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: 📊 YouTube 数据复盘 - ${{ env.REPORT_DATE }}
+          to: ${{ secrets.EMAIL_TO }}
+          from: YouTube数据复盘机器人
+          body: file://reports/email_body.html
+          content_type: text/html
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report
+          path: reports/
+          retention-days: 30
